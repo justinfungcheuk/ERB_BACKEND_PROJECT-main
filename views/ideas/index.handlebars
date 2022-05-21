@@ -1,0 +1,17 @@
+<!-- testing the idea/index route is working -->
+<!-- <h1>idea</h1> -->
+{{#each ideas}}
+<div class="card card-body mb-2">
+<h4>{{title}}</h4>
+<p>{{details}}</p>
+<!-- check mongodb the _id property name, different version of mongodb the id name can be different -->
+<a href="/ideas/edit/{{_id}}" class="btn btn-dark btn-block">Edit</a>
+<!-- adding a form for delete button -->
+<form action="/ideas/{{_id}}?_method=DELETE" method="POST">
+<input type="hidden" name="_method" value="DELETE" />
+<input type="submit" class="btn btn-danger btn-block" value="Delete" />
+</form>
+</div>
+{{else}}
+<p>No note listed</p>
+{{/each}}

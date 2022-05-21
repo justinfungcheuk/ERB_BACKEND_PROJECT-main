@@ -1,0 +1,23 @@
+<!-- passing errors to page -->
+<!-- loop through the errors -->
+{{#each errors}} <!-- each 就是 looping --> 
+<!-- if errors then put the text, the text property from error -->
+<div class="alert alert-danger">{{text}}</div> <!-- 如果有 error 出現，就彈出錯誤的提示，否則就運行下面的編碼 -->
+{{else}}
+{{/each}}
+<div class="card card-body">
+    <h3>Notes</h3>
+    <form action="/ideas" method="post">
+    <div class="form-group">
+        <label for="title">Title</label>
+        <!-- put in required to enforce input -->
+        <input type="text" name="title" class="form-control" required/> <!-- required 代表是必填項，避免留空的情況出現 -->
+    </div>
+    <div class="form-group">
+        <label for="details">Details</label>
+        <!-- required to enforce input -->
+        <textarea name="details" class="form-control" require></textarea>
+    </div>
+    <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+</div>

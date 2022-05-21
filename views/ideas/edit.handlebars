@@ -1,0 +1,31 @@
+<!-- passing errors to page -->
+<!-- loop through the errors -->
+{{#each errors}}
+<!-- if errors then put the text, the text property from error -->
+<div class="alert alert-danger">{{text}}</div> <!-- 如果有 error 出現，就彈出錯誤的提示，否則就運行下面的編碼 -->
+{{else}}
+
+{{/each}}
+<div class="card card-body">
+    <h3>Edit Notes</h3>
+    <form  action="/ideas/{{idea._id}}?_method=PUT" method="POST">
+    <input type="hidden" name="_method" value="PUT" />
+    <div class="form-group">
+        <label for="title">Title</label>
+        <input 
+        type="text" 
+        name="title"
+        class="form-control" 
+        value="{{idea.title}}"
+        required />
+        <!-- 加 variable - idea.title 就可以修改內容 -->
+        <!-- value as part of the input attribute -->
+    </div>
+    <div class="form-group">
+        <label for="details">Details</label>
+        <textarea name="details" class="form-control" required>{{idea.details}}</textarea> <!-- 加 variable - {{idea.details}} 就可以修改內容 -->
+        <!-- variable as text content -->
+    </div>
+    <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+</div>
