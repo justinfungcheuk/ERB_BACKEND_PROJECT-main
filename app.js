@@ -16,9 +16,9 @@
 // within views create layouts create main.handlebars defaultlayout: "main"
 // all the repeatable html structure will go to main, usually the DOC
 
-import express from "express"; 
+import express from "express"; // handle routing
 // express from "express";  - express.use() -> app.use() - 實際上 app 就是 express，只是改了名字
-import { engine } from "express-handlebars";
+import { engine } from "express-handlebars"; 
 // load mongose
 import mongoose from "mongoose";
 // load body-parser
@@ -26,7 +26,9 @@ import bodyParser from "body-parser"; // 將 object format，做一個 parsing
 // import methodOverride
 import methodOverride from "method-override";
 import morgan from "morgan";
-
+import flash from "connect-flash"
+import session from "express-session"
+// 引入模塊
 
 const app = express(); // app 就是擁有 express 所有的 function
 
@@ -48,21 +50,39 @@ import Idea from "./models/Idea.js";
  * ES6 handlebars 
  * 由於使用了 express-handlebars，所以需要使用 import 的方式引入模塊
  */
-app.engine("handlebars", engine()); // 從 handlebars 該部份只抽取 engine function 這部分 
-app.set("view engine", "handlebars"); // 因為要使用 template engine 它比較相似 react
+app.engine("handlebars", engine()); // 從 handlebars 該部份只抽取 engine function 這部分  - must first
+app.set("view engine", "handlebars"); // 因為要使用 template engine 它比較相似 react      - second
 // view engine 是 under handlebars
-app.set("views", "./views"); // 將所有的 handlebars engine 放到 views 該部份的文件
+app.set("views", "./views"); // 將所有的 handlebars engine 放到 views 該部份的文件         - second
 app.use(morgan("tiny")); // morgan 中間件 的好處：可以幫助追蹤 app 的數據，運行時會展示出來關係 data 的 communication
 // add methodoveride
 // app.use(express.json());
-
 // put body-parser middleware here
 app.use(bodyParser.urlencoded({extended: false}));
-
 // parse application/json
 app.use(bodyParser.json());
-
 app.use(methodOverride("_method"));
+
+//remove cookie
+app.use(
+    session({
+        secret: "secret",
+        resave: true,
+        saveUninitialized: true,
+    })
+);
+
+app.use(flash());
+// set global variable
+// whatever msg is going to post, pass to the "locals" template
+app.use(function (req, res, next){
+    res.locals.success_msg = req.flash("success_msg"); // locals - 需要使用 passport local 串連起來, 例如：login，logout，彈出這些信息提示
+    res.locals.error_msg = req.flash("error_msg");
+    // for passport error handling
+    res.locals.error = req.flash("error"); // passport 使用該 error - 
+    next();
+})
+
 
 // middleware setup, example from express middleware,
 // everytime reload the route page, update time in termal
@@ -84,7 +104,7 @@ app.use(function (req, res, next) {
 // purpose: that can create a log file within the server
 // we can pass the value back to browser
 // send the render page by changing sned function render function
-app.get("/", (req, res) => {
+app.get("/", (req, res) => { 
     //console.log(req.name);
     const title = "Welcome";
     res.render("index", { title : title}); // index 的 handlebars
@@ -136,11 +156,83 @@ app.get("/ideas/edit/:id", (req, res) => {
     })
     .lean()
     .then((idea) => {
-        console.log("editing" + '' + idea.title + '' + idea.details);
+        console.log('editing' + ' ' + idea.title + ' ' + idea.details);
         // then pass the :data to render under edit route
         res.render("ideas/edit", {
             idea: idea,
         });
+    });
+});
+
+/*
+// step9 - 10: process idea from
+app.post("/ideas", (req, res) => {
+    // testing the route first
+    // res.send("ok");
+    // testing the body-parser work for getting the content
+    // console.log(req.body);
+    let errors = []; // 為什麼要用 array 保存 message？ 地址：起步點 - 將地址傳送到 bodyparse - 經過地址傳送到其他地方
+    // push error message if empty input
+    if(!req.body.title){
+        errors.push({text: "please add a title"});
+    }
+    if(!req.body.details){
+        errors.push({text: "please add some details"});
+    }
+    // if there are errors (array 有東西), render the page
+    if(errors.length > 0){
+        res.render("ideas/add", {
+            errors: errors,
+            title: req.body.title,
+            details: req.body.details,
+        });
+        // if no error then go to save the data
+    } else {
+        // if data are good then come to here
+        // res.send("passed");
+        
+        // good data then go to save inside the mongodb
+        // use the newUser to keep the data object,
+        // in the future the object can scalable for other info
+        const newUser = {
+            title: req.body.title,
+            details: req.body.details,
+        };
+        new Idea(newUser).save().then((idea) => {
+            req.flash("success_msg", "Note added");
+            res.redirect("/ideas");
+        });
+    }
+});
+*/
+
+
+// id is not link
+app.put("/ideas/edit/:id", (req, res) => { // 每一個 method， 在 express 都是一個 function
+//app.put("/ideas/:id", (req, res) => {
+    console.log(req);
+    Idea.findOne({
+        _id: req.params.id,
+    })
+    .then((idea) => {
+        // updated value
+        idea.title = req.body.title;
+        idea.details = req.body.details;
+        idea.save().then((idea) => {
+            req.flash("success_msg", "Note updated");
+            res.redirect("/ideas");
+    });
+    });
+});
+
+    // console.log("getting here");
+    // const idea = await Idea.findById(parseInt(req.params.id));
+    // 將客戶端傳過來的 title 賦值給產品（賦值不需要異步，因為它只是 javascript 中的一個內存操作，而查詢，保存數據都需要和 MongoDB連接需要異步）
+
+app.delete("/ideas/:id", (req, res) => {
+    Idea.remove({_id: req.params.id}).then(()=>{
+        req.flash("success_msg", "Note removed");
+        res.redirect("/ideas");
     });
 });
 
@@ -165,6 +257,7 @@ app.post("/ideas", (req, res) => {
             title: req.body.title,
             details: req.body.details,
         });
+        // if no error then go to save the data
     } else {
         // if data are good then come to here
         // res.send("passed");
@@ -177,38 +270,11 @@ app.post("/ideas", (req, res) => {
             details: req.body.details,
         };
         new Idea(newUser).save().then((idea) => {
+            req.flash("success_msg", "Note added");
             res.redirect("/ideas");
         });
     }
 });
-
-
-// id is not link
-
-app.put("/ideas/edit/:id", (req, res) => { // 每一個 method， 在 express 都是一個 function
-    console.log(req);
-    Idea.findOne({
-        _id: req.params.id,
-    }).then((idea) => {
-        // updated value
-        idea.title = req.body.title;
-        idea.details = req.body.details;
-        idea.save().then((idea) => {
-            res.redirect("/ideas");
-    });
-    });
-});
-
-    // console.log("getting here");
-    // const idea = await Idea.findById(parseInt(req.params.id));
-    // 將客戶端傳過來的 title 賦值給產品（賦值不需要異步，因為它只是 javascript 中的一個內存操作，而查詢，保存數據都需要和 MongoDB連接需要異步）
-
-app.delete("/ideas/:id", (req, res) => {
-    Idea.remove({_id: req.params.id}).then(()=>{
-        res.redirect("/ideas");
-    });
-});
-
 
 app.use((req, res, next) => {
     res.status(404);

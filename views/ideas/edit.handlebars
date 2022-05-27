@@ -8,7 +8,7 @@
 {{/each}}
 <div class="card card-body">
     <h3>Edit Notes</h3>
-    <form  action="/ideas/{{idea._id}}?_method=PUT" method="POST">
+    <form  action="/ideas/edit/{{idea._id}}?_method=PUT" method="POST">
     <input type="hidden" name="_method" value="PUT" />
     <div class="form-group">
         <label for="title">Title</label>
