@@ -23,12 +23,21 @@ import { engine } from "express-handlebars";
 import mongoose from "mongoose";
 // load body-parser
 import bodyParser from "body-parser"; // 將 object format，做一個 parsing
+
 // import methodOverride
 import methodOverride from "method-override";
 import morgan from "morgan";
+
+// impoty express-session
 import flash from "connect-flash"
 import session from "express-session"
 // 引入模塊
+// load Idea Model as constructor
+import Idea from "./models/Idea.js";
+//const Idea = mongoose.model("ideas");
+import User from "./models/User.js";
+
+
 
 const app = express(); // app 就是擁有 express 所有的 function
 
@@ -39,10 +48,6 @@ mongoose
 .then(() => console.log("Mongodb connected..")) // 因為不需要牽涉 this，所以可以直接寫 arrow function
 .catch((err) => console.log(err));
 //因為 database / response 什麼時候回來，我們不能控制，所以要用 promise object
-
-// load Idea Model as constructor
-import Idea from "./models/Idea.js";
-//const Idea = mongoose.model("ideas");
 
 //setup handlebars middleware
 // copy 3 line from updated github
@@ -116,6 +121,58 @@ app.get("/", (req, res) => {
 app.get("/about", (req, res) => {
     res.render("about");  
 });
+
+app.get("/users/login", (req, res) => {
+    res.render("users/login");
+});
+
+app.get("/users/register", (req, res) => {
+    res.render("users/register");
+});
+
+app.post("/register", (req, res) => {
+    let error = [];
+    if (req.body.password !== req.body.password2) {
+        errors.push({ text: "Passwords do not match" });
+    }
+    if (req.body.password.length < 4) {
+        errors.push({ text: "Password must be at least 4 characters" });
+    }
+    if (error.length > 0) { 
+        res.render("user/register", { // 去返 flash - pop up error message
+            // 如果有 error 就返回到 register
+            errors: errors,
+            name: req.body.name,
+            email: req.body.email,
+            password: req.body.password,
+            password2: req.body.password2,
+        });
+    } else {
+        const newUser = new User({
+            name: req.body.name,
+            email: req.body.email,
+            password: req.body.password,
+        })
+        // 10 char long bcrypt 
+        bcrypt.genSalt(10, (err, salt) => { // bcrypt 主要將 password bcrypt 再儲存到 mongodb
+            // bcrypt 
+            bcrypt.hash(newUser.password, salt, (err, hash) => {
+                if (err) throw err; // 有 error 就停止運作
+                newUser.password = hash; // 將 newUser的密碼用 bcrypt hash 儲存起來
+                newUser
+                    .save()
+                    .then((user) => {
+                    req.flash("success_msg", "Register done !");
+                    res.redirect("/users/login");
+                })
+                .catch ((err) => {
+                    console.log(err);
+                    return;
+                })
+            })
+        })
+    }
+})
 
 // idea index route
 /*

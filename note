@@ -1,0 +1,17 @@
+express 的 middleware的次序需要準確，否則會出現錯誤
+app.use() 都是 middleware
+
+(req, res, next)
+req.body.name 最主要是中間的 body，該 request 引入來的時候需要做什麼
+res.redirect("/") 路由引去另一個地方 / 另一個頁面 
+middleware 的 next 是可以向下一步繼續運行，否則無法向下一步運行
+
+data 經過你整個 middleware，需要做什麼
+
+
+
+
+
+mongodb 用 id 來做 URL changes，而且 mongodb就只有id
+
+： 後面的就是一個 variable 例如：router.get('/teacher/name/:qname', function(req, res, next) {
